@@ -1,0 +1,130 @@
+name: 部署微前端应用到GitHub Pages
+
+on:
+  push:
+    branches: [main] # 设置要触发部署的分支
+  workflow_dispatch: # 允许手动触发部署
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "npm"
+
+      - name: 安装根目录依赖
+        run: npm install
+
+      - name: 安装Container应用依赖
+        run: cd container && npm install
+
+      - name: 安装React应用依赖
+        run: cd react-app && npm install
+
+      - name: 安装Vue应用依赖
+        run: cd vue-app && npm install
+
+      - name: 修改应用配置以适应GitHub Pages
+        run: |
+          # 修改Container应用的publicPath
+          sed -i 's|http://localhost:8080/|https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/container/|g' container/webpack.config.js
+
+          # 修改React应用的publicPath
+          sed -i 's|http://localhost:8081/|https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/react-app/|g' react-app/webpack.config.js
+
+          # 修改Vue应用的publicPath
+          sed -i 's|http://localhost:8082/|https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/vue-app/|g' vue-app/webpack.config.js
+
+          # 修改Container应用中的远程应用引用
+          sed -i 's|reactApp@http://localhost:8081/remoteEntry.js|reactApp@https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/react-app/remoteEntry.js|g' container/webpack.config.js
+          sed -i 's|vueApp@http://localhost:8082/remoteEntry.js|vueApp@https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/vue-app/remoteEntry.js|g' container/webpack.config.js
+
+      - name: 构建Container应用
+        run: cd container && npm run build
+
+      - name: 构建React应用
+        run: cd react-app && npm run build
+
+      - name: 构建Vue应用
+        run: cd vue-app && npm run build
+
+      - name: 准备部署目录
+        run: |
+          mkdir -p dist
+          cp -r container/dist dist/container
+          cp -r react-app/dist dist/react-app
+          cp -r vue-app/dist dist/vue-app
+          cp index.html dist/
+          cp README.md dist/
+
+      - name: 创建入口页面
+        run: |
+          cat > dist/index.html << 'EOL'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>微前端示例项目</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background-color: #f5f5f5;
+              }
+              .container {
+                text-align: center;
+                padding: 2rem;
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                max-width: 600px;
+              }
+              h1 {
+                color: #333;
+              }
+              p {
+                color: #666;
+                margin-bottom: 1.5rem;
+              }
+              .button {
+                display: inline-block;
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 20px;
+                text-decoration: none;
+                border-radius: 4px;
+                font-weight: bold;
+                transition: background-color 0.3s;
+              }
+              .button:hover {
+                background-color: #45a049;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>微前端示例项目</h1>
+              <p>这是一个使用Webpack 5 Module Federation实现的微前端示例项目，包含React和Vue子应用。</p>
+              <a href="./container/" class="button">进入应用</a>
+            </div>
+          </body>
+          </html>
+          EOL
+
+      - name: 部署到GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist # 要部署的文件夹
+          branch: gh-pages # 部署到的分支

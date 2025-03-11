@@ -1,0 +1,27 @@
+{
+  "name": "micro-frontend-demo",
+  "version": "1.0.0",
+  "description": "微前端示例项目，包含React和Vue子应用",
+  "scripts": {
+    "start": "concurrently \"npm run start:container\" \"npm run start:react\" \"npm run start:vue\"",
+    "start:container": "cd container && npm start",
+    "start:react": "cd react-app && npm start",
+    "start:vue": "cd vue-app && npm start",
+    "install:all": "concurrently \"npm run install:container\" \"npm run install:react\" \"npm run install:vue\"",
+    "install:container": "cd container && npm install",
+    "install:react": "cd react-app && npm install",
+    "install:vue": "cd vue-app && npm install"
+  },
+  "keywords": [
+    "microfrontend",
+    "react",
+    "vue",
+    "webpack",
+    "module-federation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
