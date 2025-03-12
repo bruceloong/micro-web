@@ -5,8 +5,14 @@ on:
     branches: [main] # 设置要触发部署的分支
   workflow_dispatch: # 允许手动触发部署
 
+# 添加权限配置
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: 检出代码
@@ -124,9 +130,18 @@ jobs:
           </html>
           EOL
 
-      - name: 部署到GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: 上传构建产物
+        uses: actions/upload-pages-artifact@v1
         with:
-          folder: dist # 要部署的文件夹
-          branch: gh-pages # 部署到的分支
-          cname: micro-web.yss520.online # 设置自定义域名
+          path: dist
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 部署到GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
