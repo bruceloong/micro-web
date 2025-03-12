@@ -30,20 +30,20 @@ jobs:
       - name: 安装Vue应用依赖
         run: cd vue-app && npm install
 
-      - name: 修改应用配置以适应GitHub Pages
+      - name: 修改应用配置以适应自定义域名
         run: |
           # 修改Container应用的publicPath
-          sed -i 's|http://localhost:8080/|https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/container/|g' container/webpack.config.js
+          sed -i 's|http://localhost:8080/|https://micro-web.yss520.online/container/|g' container/webpack.config.js
 
           # 修改React应用的publicPath
-          sed -i 's|http://localhost:8081/|https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/react-app/|g' react-app/webpack.config.js
+          sed -i 's|http://localhost:8081/|https://micro-web.yss520.online/react-app/|g' react-app/webpack.config.js
 
           # 修改Vue应用的publicPath
-          sed -i 's|http://localhost:8082/|https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/vue-app/|g' vue-app/webpack.config.js
+          sed -i 's|http://localhost:8082/|https://micro-web.yss520.online/vue-app/|g' vue-app/webpack.config.js
 
           # 修改Container应用中的远程应用引用
-          sed -i 's|reactApp@http://localhost:8081/remoteEntry.js|reactApp@https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/react-app/remoteEntry.js|g' container/webpack.config.js
-          sed -i 's|vueApp@http://localhost:8082/remoteEntry.js|vueApp@https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/vue-app/remoteEntry.js|g' container/webpack.config.js
+          sed -i 's|reactApp@http://localhost:8081/remoteEntry.js|reactApp@https://micro-web.yss520.online/react-app/remoteEntry.js|g' container/webpack.config.js
+          sed -i 's|vueApp@http://localhost:8082/remoteEntry.js|vueApp@https://micro-web.yss520.online/vue-app/remoteEntry.js|g' container/webpack.config.js
 
       - name: 构建Container应用
         run: cd container && npm run build
@@ -62,6 +62,7 @@ jobs:
           cp -r vue-app/dist dist/vue-app
           cp index.html dist/
           cp README.md dist/
+          cp CNAME dist/
 
       - name: 创建入口页面
         run: |
@@ -128,3 +129,4 @@ jobs:
         with:
           folder: dist # 要部署的文件夹
           branch: gh-pages # 部署到的分支
+          cname: micro-web.yss520.online # 设置自定义域名
